@@ -1,17 +1,17 @@
-﻿using ChatingApp.Data;
+﻿using ChatingApp.BackEnd.Controllers;
+using ChatingApp.Data;
 using ChatingApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatingApp.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsersController : ControllerBase
+    public class MembersController : BaseApiController
     {
         private readonly AppDbContext _context;
-        public UsersController(AppDbContext context) { 
+        public MembersController(AppDbContext context) { 
             _context = context;
         }
 
@@ -22,6 +22,7 @@ namespace ChatingApp.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<AppUser>> GetMember(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
