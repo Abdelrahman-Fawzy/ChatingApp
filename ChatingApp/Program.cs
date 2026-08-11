@@ -1,4 +1,5 @@
 using ChatingApp.BackEnd.Interfaces;
+using ChatingApp.BackEnd.Middlewares;
 using ChatingApp.BackEnd.Services;
 using ChatingApp.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -41,6 +42,7 @@ builder.Services.AddCors();
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
