@@ -1,33 +1,38 @@
 ﻿using ChatingApp.BackEnd.Controllers;
+using ChatingApp.BackEnd.Entities;
+using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.Data;
 using ChatingApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace ChatingApp.Controllers
 {
-    public class MembersController : BaseApiController
+    [Authorize]
+    public class MembersController(IMemberRepository memberRepository) : BaseApiController
     {
-        private readonly AppDbContext _context;
-        public MembersController(AppDbContext context) { 
-            _context = context;
-        }
 
         [HttpGet]
-        public async Task<ActionResult<List<AppUser>>> GetMembers()
+        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
         {
-            return await _context.Users.ToListAsync();
+            return Ok(await memberRepository.GetMembersAsync());
         }
 
         [HttpGet("{id}")]
-        [Authorize]
-        public async Task<ActionResult<AppUser>> GetMember(Guid id)
+        public async Task<ActionResult<Member>> GetMember(string id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await memberRepository.GetMember(id);
             if (user == null) return NotFound(new {Message = "لا يوجد مستخدم"});
             return Ok(user);
+        }
+
+        [HttpGet("{id}/photos")]
+        public async Task<ActionResult<IReadOnlyList<Photo>>> GetPhotosByMemberId(string id)
+        {
+            return Ok(await memberRepository.GetPhotosByMemberIdAsync(id));
         }
     }
 }

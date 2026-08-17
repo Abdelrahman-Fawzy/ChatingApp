@@ -2,7 +2,7 @@
 {
     public class UserDTO
     {
-        public Guid ID { get; set; }
+        public required string Id { get; set; }
         public required string DisplayName { get; set; }
         public required string Email { get; set; }
         public string? ImageURL { get; set; }

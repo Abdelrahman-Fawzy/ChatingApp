@@ -25,7 +25,7 @@ namespace ChatingApp.BackEnd.Services
             {
                 new (ClaimTypes.Email, user.Email),
                 new (ClaimTypes.NameIdentifier, user.DisplayName),
-                new (System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, user.ID.ToString()),
+                new (System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             };
 
             var secureKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));

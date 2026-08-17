@@ -1,11 +1,16 @@
-﻿namespace ChatingApp.Models
+﻿using ChatingApp.BackEnd.Entities;
+
+namespace ChatingApp.Models
 {
     public class AppUser
     {
-        public Guid ID { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         public required string DisplayName { get; set; }
+        public string? ImageUrl { get; set; }
         public required string Email { get; set; }
         public required byte[] PasswordHash { get; set; }
         public required byte[] PasswordSalt { get; set; }
+
+        public Member Member { get; set; } = null!;
     }
 }

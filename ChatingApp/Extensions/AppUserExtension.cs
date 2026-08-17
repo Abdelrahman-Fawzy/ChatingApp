@@ -10,7 +10,7 @@ namespace ChatingApp.BackEnd.Extensions
         {
             var userDto = new UserDTO
             {
-                ID = user.ID,
+                Id = user.Id,
                 DisplayName = user.DisplayName,
                 Email = user.Email,
                 Token = _tokenService.CreateToken(user)
