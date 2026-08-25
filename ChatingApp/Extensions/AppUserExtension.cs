@@ -13,6 +13,7 @@ namespace ChatingApp.BackEnd.Extensions
                 Id = user.Id,
                 DisplayName = user.DisplayName,
                 Email = user.Email,
+                ImageURL = user.ImageUrl,
                 Token = _tokenService.CreateToken(user)
             };
 
