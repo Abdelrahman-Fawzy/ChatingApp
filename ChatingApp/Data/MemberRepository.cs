@@ -18,6 +18,13 @@ namespace ChatingApp.BackEnd.Data
             return await _context.Members.FindAsync(id);
         }
 
+        public async Task<Member?> GetMemberToUpdate(string id)
+        {
+            return await _context.Members
+                .Include(m => m.User)
+                .SingleOrDefaultAsync(m => m.Id == id);
+        }
+
         public async Task<IReadOnlyList<Photo>> GetPhotosByMemberIdAsync(string id)
         {
             return await _context.Members

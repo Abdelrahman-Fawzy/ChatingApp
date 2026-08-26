@@ -24,7 +24,8 @@ namespace ChatingApp.BackEnd.Services
             var claims = new List<Claim>
             {
                 new (ClaimTypes.Email, user.Email),
-                new (ClaimTypes.NameIdentifier, user.DisplayName),
+                new (ClaimTypes.Name, user.DisplayName),
+                new (ClaimTypes.NameIdentifier, user.Id),
                 new (System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             };
 

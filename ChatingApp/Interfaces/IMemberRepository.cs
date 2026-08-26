@@ -8,6 +8,7 @@ namespace ChatingApp.BackEnd.Interfaces
     {
         public Task<IReadOnlyList<Member>> GetMembersAsync();
         public Task<Member?> GetMember(string id);
+        public Task<Member?> GetMemberToUpdate(string id);
         public Task<IReadOnlyList<Photo>> GetPhotosByMemberIdAsync(string id);
         public Task<bool> SaveChangesAsync();
         public void Update(Member member);
