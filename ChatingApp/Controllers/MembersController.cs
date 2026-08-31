@@ -15,7 +15,7 @@ using System.Security.Claims;
 namespace ChatingApp.Controllers
 {
     [Authorize]
-    public class MembersController(IMemberRepository memberRepository) : BaseApiController
+    public class MembersController(IMemberRepository memberRepository, IPhotoService _photoService) : BaseApiController
     {
 
         [HttpGet]
@@ -59,6 +59,82 @@ namespace ChatingApp.Controllers
 
             return BadRequest("Failed to update member");
 
+        }
+
+        [HttpPost("add-photo")]
+        public async Task<ActionResult<Photo>> AddPhoto(IFormFile file)
+        {
+            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+
+            if (member == null) return BadRequest("Cannot update member");
+
+            var result = await _photoService.UploadPhotoAync(file);
+
+            if(result.Error != null) return BadRequest(result.Error.Message);
+
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId,
+                MemberId = User.GetMemberId()
+            };
+
+            if(member.ImageUrl == null)
+            {
+                member.ImageUrl = photo.Url;
+                member.User.ImageUrl = photo.Url;
+            }
+
+            member.Photos.Add(photo);
+
+            if(await  memberRepository.SaveChangesAsync() ) return photo;
+
+            return BadRequest("Problem adding photo");
+        }
+
+        [HttpPut("set-main-photo/{photoID}")]
+        public async Task<ActionResult> SetMainPhoto(int photoID)
+        {
+            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+
+            if (member == null) return BadRequest("Cannot get member from token");
+
+            var photo = member.Photos.SingleOrDefault(p => p.Id == photoID);
+
+            if (photo == null) return BadRequest("هذا الصورة غير موجودة");
+            if (member.ImageUrl == photo.Url) return BadRequest("هذه الصورة هي الرئيسية بالفعل");
+
+            member.ImageUrl = photo.Url;
+            member.User.ImageUrl = photo.Url;
+
+            if (await memberRepository.SaveChangesAsync()) return NoContent();
+
+            return BadRequest("Problem setting main photo");
+        }
+
+        [HttpDelete("delete-photo/{photoID}")]
+        public async Task<ActionResult> DeletePhoto(int photoID)
+        {
+            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+
+            if (member == null) return BadRequest("Cannot get member from token");
+
+            var photo = member.Photos.SingleOrDefault(p => p.Id == photoID);
+
+            if (photo == null) return BadRequest("هذا الصورة غير موجودة");
+            if (member.ImageUrl == photo.Url) return BadRequest("لا يمكن حذف الصورة الرئيسية");
+
+            if(photo.PublicId != null)
+            {
+                var result = await _photoService.DeletePhotoAync(photo.PublicId);
+                if (result.Error != null) return BadRequest(result.Error.Message);
+            }
+
+            member.Photos.Remove(photo);
+
+            if (await memberRepository.SaveChangesAsync()) return NoContent();
+
+            return BadRequest("Problem deleting the photo");
         }
     }
 }

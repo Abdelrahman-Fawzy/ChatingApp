@@ -1,4 +1,5 @@
 using ChatingApp.BackEnd.Data;
+using ChatingApp.BackEnd.Helpers;
 using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.BackEnd.Middlewares;
 using ChatingApp.BackEnd.Services;
@@ -23,7 +24,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
