@@ -1,4 +1,5 @@
 ﻿using ChatingApp.BackEnd.DTOs;
+using ChatingApp.BackEnd.Entities;
 using ChatingApp.BackEnd.Extensions;
 using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.Data;
@@ -37,7 +38,15 @@ namespace ChatingApp.BackEnd.Controllers
                 DisplayName = registerDTO.DisplayName,
                 Email = registerDTO.Email,
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDTO.Password)),
-                PasswordSalt = hmac.Key
+                PasswordSalt = hmac.Key,
+                Member = new Member
+                {
+                    DisplayName = registerDTO.DisplayName,
+                    Gender = registerDTO.Gender,
+                    DateOfBirth = registerDTO.DateOfBirth,
+                    City = registerDTO.City,
+                    Country = registerDTO.Country
+                }
             };
 
             _context.Users.Add(user);
