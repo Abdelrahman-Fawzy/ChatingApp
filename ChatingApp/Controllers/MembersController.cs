@@ -2,6 +2,7 @@
 using ChatingApp.BackEnd.DTOs;
 using ChatingApp.BackEnd.Entities;
 using ChatingApp.BackEnd.Extensions;
+using ChatingApp.BackEnd.Helpers;
 using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.Data;
 using ChatingApp.Models;
@@ -19,9 +20,12 @@ namespace ChatingApp.Controllers
     {
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
+        public async Task<ActionResult<PaginatedResult<Member>>> GetMembers([FromQuery] MemberParams memberParams)
         {
-            return Ok(await memberRepository.GetMembersAsync());
+
+            memberParams.CurrentMemberID = User.GetMemberId();
+
+            return Ok(await memberRepository.GetMembersAsync(memberParams));
         }
 
         [HttpGet("{id}")]
