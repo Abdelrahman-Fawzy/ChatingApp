@@ -60,7 +60,22 @@ namespace ChatingApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Members", (string)null);
+                    b.ToTable("Members");
+                });
+
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.MemberLike", b =>
+                {
+                    b.Property<string>("SourceMemberID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TargetMemberID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("SourceMemberID", "TargetMemberID");
+
+                    b.HasIndex("TargetMemberID");
+
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Photo", b =>
@@ -86,7 +101,7 @@ namespace ChatingApp.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.ToTable("Photos", (string)null);
+                    b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("ChatingApp.Models.AppUser", b =>
@@ -115,7 +130,7 @@ namespace ChatingApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Member", b =>
@@ -129,15 +144,43 @@ namespace ChatingApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.MemberLike", b =>
+                {
+                    b.HasOne("ChatingApp.BackEnd.Entities.Member", "SourceMember")
+                        .WithMany("LikedMembers")
+                        .HasForeignKey("SourceMemberID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ChatingApp.BackEnd.Entities.Member", "TargetMember")
+                        .WithMany("LikedByMembers")
+                        .HasForeignKey("TargetMemberID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("SourceMember");
+
+                    b.Navigation("TargetMember");
+                });
+
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Photo", b =>
                 {
                     b.HasOne("ChatingApp.BackEnd.Entities.Member", "Member")
-                        .WithMany()
+                        .WithMany("Photos")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.Member", b =>
+                {
+                    b.Navigation("LikedByMembers");
+
+                    b.Navigation("LikedMembers");
+
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("ChatingApp.Models.AppUser", b =>

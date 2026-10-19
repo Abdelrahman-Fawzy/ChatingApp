@@ -12,10 +12,26 @@ namespace ChatingApp.Data
         public DbSet<AppUser> Users { get; set; }
         public DbSet<Member> Members { get; set; }
         public DbSet<Photo> Photos { get; set; }
+        public DbSet<MemberLike> Likes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<MemberLike>()
+                .HasKey(ml => new { ml.SourceMemberID, ml.TargetMemberID });
+
+            modelBuilder.Entity<MemberLike>()
+                .HasOne(ml => ml.SourceMember)
+                .WithMany(m => m.LikedMembers)
+                .HasForeignKey(ml => ml.SourceMemberID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MemberLike>()
+                .HasOne(ml => ml.TargetMember)
+                .WithMany(m => m.LikedByMembers)
+                .HasForeignKey(ml => ml.TargetMemberID)
+                .OnDelete(DeleteBehavior.NoAction);
 
             var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
                 v => v.ToUniversalTime(),
