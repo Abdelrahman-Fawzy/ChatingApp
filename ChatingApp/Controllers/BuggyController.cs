@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatingApp.BackEnd.Controllers
@@ -27,6 +28,13 @@ namespace ChatingApp.BackEnd.Controllers
         public IActionResult GetServerError()
         {
             throw new Exception("There Is Server Error");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin-secret")]
+        public ActionResult<string> GetSecretAdmin()
+        {
+            return Ok(new { message = "Only Admin Can Show This" });
         }
     }
 }

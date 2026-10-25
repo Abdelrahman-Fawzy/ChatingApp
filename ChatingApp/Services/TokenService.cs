@@ -1,8 +1,10 @@
 ﻿using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ChatingApp.BackEnd.Services
@@ -10,13 +12,15 @@ namespace ChatingApp.BackEnd.Services
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
+        private readonly UserManager<AppUser> _userManager;
 
-        public TokenService(IConfiguration config)
+        public TokenService(IConfiguration config, UserManager<AppUser> userManager)
         {
             _configuration = config;
+            _userManager = userManager;
         }
 
-        public string CreateToken(AppUser user)
+        public async Task<string> CreateToken(AppUser user)
         {
             var key = _configuration["JWT:Key"] ?? String.Empty;
             if (!string.IsNullOrEmpty(key) && key.Length < 64) throw new Exception("Your Key Is Invalid");
@@ -28,6 +32,9 @@ namespace ChatingApp.BackEnd.Services
                 new (ClaimTypes.NameIdentifier, user.Id),
                 new (System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             };
+
+            var roles = await _userManager.GetRolesAsync(user);
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var secureKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
 
@@ -44,6 +51,12 @@ namespace ChatingApp.BackEnd.Services
             var token = tokenHandler.CreateToken(credentials);
 
             return tokenHandler.WriteToken(token);
+        }
+
+        public string CreateRefreshToken()
+        {
+            var randomNumber = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(randomNumber);
         }
     }
 }

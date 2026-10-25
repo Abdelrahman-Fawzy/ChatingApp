@@ -2,6 +2,7 @@
 using ChatingApp.BackEnd.Entities;
 using ChatingApp.Data;
 using ChatingApp.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,9 +12,9 @@ namespace ChatingApp.BackEnd.Data
 {
     public class Seed
     {
-        public static async Task SeedUsers(AppDbContext context)
+        public static async Task SeedUsers(UserManager<AppUser> userManager)
         {
-            if (await context.Users.AnyAsync()) return;
+            if (await userManager.Users.AnyAsync()) return;
 
             var memberData = await File.ReadAllTextAsync("Data/UserSeedData.json");
             var members = JsonSerializer.Deserialize<List<SeedUserDTO>>(memberData);
@@ -31,11 +32,10 @@ namespace ChatingApp.BackEnd.Data
                 var user = new AppUser
                 {
                     Id = member.Id,
-                    DisplayName = member.DisplayName,
                     Email = member.Email,
+                    UserName = member.Email,
+                    DisplayName = member.DisplayName,
                     ImageUrl = member.ImageUrl,
-                    PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("P@ssw0rd")),
-                    PasswordSalt = hmac.Key,
                     Member = new Member
                     {
                         Id = member.Id,
@@ -57,10 +57,25 @@ namespace ChatingApp.BackEnd.Data
                     MemberId = member.Id,
                 });
 
-                context.Users.Add(user);
+                var result = await userManager.CreateAsync(user, "P@ssw0rd");
 
-                await context.SaveChangesAsync();
+                if(!result.Succeeded)
+                {
+                    Console.WriteLine($"Failed to create user {user.DisplayName}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+
+                await userManager.AddToRoleAsync(user, "Member");
             }
+
+            var admin = new AppUser
+            {
+                Email = "admin@test.com",
+                UserName = "admin@test.com",
+                DisplayName = "Admin"
+            };
+
+            await userManager.CreateAsync(admin, "P@ssw0rd");
+            await userManager.AddToRolesAsync(admin, ["Admin", "Moderator"]);
         }
     }
 }

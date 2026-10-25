@@ -7,5 +7,6 @@
         public required string Email { get; set; }
         public string? ImageURL { get; set; }
         public required string Token { get; set; }
+        public IList<string>? Roles { get; set; }
     }
 }
