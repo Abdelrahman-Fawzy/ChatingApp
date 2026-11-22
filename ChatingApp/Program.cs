@@ -3,6 +3,7 @@ using ChatingApp.BackEnd.Helpers;
 using ChatingApp.BackEnd.Interfaces;
 using ChatingApp.BackEnd.Middlewares;
 using ChatingApp.BackEnd.Services;
+using ChatingApp.BackEnd.SignalR;
 using ChatingApp.Data;
 using ChatingApp.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,6 +35,9 @@ builder.Services.AddScoped<LogUserActivity>();
 
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<PresenceTracker>();
+
 builder.Services.AddIdentityCore<AppUser>(opt =>
 {
     opt.Password.RequireNonAlphanumeric = false;
@@ -52,6 +56,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["JWT:Issuer"],
             ValidAudience = builder.Configuration["JWT:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.Request.Path;
+                if (!String.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -81,6 +100,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapHub<PresenceHub>("hubs/presence");
+app.MapHub<MessageHub>("hubs/messages");
+
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
 try
@@ -88,6 +110,7 @@ try
     var context = services.GetRequiredService<AppDbContext>();
     var userManager = services.GetRequiredService<UserManager<AppUser>>();
     await context.Database.MigrateAsync();
+    await context.Connections.ExecuteDeleteAsync();
     await Seed.SeedUsers(userManager);
 }
 catch (Exception ex)

@@ -12,5 +12,11 @@ namespace ChatingApp.BackEnd.Interfaces
         Task<PaginatedResult<MessageDTO>> GetMessagesForMember(MessageParams messageParams);
         Task<IReadOnlyList<MessageDTO>> GetMessageThread(string currentmemberId, string otherMemberId);
         Task<bool> SaveAllAsync();
+
+        void AddGroup(Group group);
+        Task RemoveConnection(string connectionID);
+        Task<Connection?> GetConnection(string connectionID);
+        Task<Group?> GetGroupForConnection(string connectionID);
+        Task<Group?> GetMessageGroup(string groupName);
     }
 }

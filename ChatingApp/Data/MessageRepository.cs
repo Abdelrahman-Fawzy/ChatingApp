@@ -10,6 +10,11 @@ namespace ChatingApp.BackEnd.Data
 {
     public class MessageRepository(AppDbContext context) : IMessageRepository
     {
+        public void AddGroup(Group group)
+        {
+            context.Groups.Add(group);
+        }
+
         public void AddMessage(Message message)
         {
             context.Messages.Add(message);
@@ -20,9 +25,27 @@ namespace ChatingApp.BackEnd.Data
             context.Messages.Remove(message);
         }
 
+        public async Task<Connection?> GetConnection(string connectionID)
+        {
+            return await context.Connections.FindAsync(connectionID);
+        }
+
+        public async Task<Group?> GetGroupForConnection(string connectionID)
+        {
+            return await context.Groups.Include(g => g.Connections)
+                .Where(g => g.Connections.Any(c => c.ConnectionID == connectionID))
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Message?> GetMessage(string messageId)
         {
             return await context.Messages.FindAsync(messageId);
+        }
+
+        public async Task<Group?> GetMessageGroup(string groupName)
+        {
+            return await context.Groups.Include(g => g.Connections)
+                .FirstOrDefaultAsync(g => g.Name == groupName);
         }
 
         public async Task<PaginatedResult<MessageDTO>> GetMessagesForMember(MessageParams messageParams)
@@ -56,6 +79,11 @@ namespace ChatingApp.BackEnd.Data
                 (message.RecipientId == otherMemberId && message.SenderId == currentmemberId)
             ).OrderBy(m => m.MessageSent).Select(MessageExtention.ToDTOProjection()).ToListAsync();
 
+        }
+
+        public async Task RemoveConnection(string connectionID)
+        {
+            await context.Connections.Where(c => c.ConnectionID == connectionID).ExecuteDeleteAsync();
         }
 
         public async Task<bool> SaveAllAsync()

@@ -22,6 +22,36 @@ namespace ChatingApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.Connection", b =>
+                {
+                    b.Property<string>("ConnectionID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("GroupName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ConnectionID");
+
+                    b.HasIndex("GroupName");
+
+                    b.ToTable("Connections");
+                });
+
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.Group", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Groups");
+                });
+
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Member", b =>
                 {
                     b.Property<string>("Id")
@@ -373,6 +403,17 @@ namespace ChatingApp.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.Connection", b =>
+                {
+                    b.HasOne("ChatingApp.BackEnd.Entities.Group", "Group")
+                        .WithMany("Connections")
+                        .HasForeignKey("GroupName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+                });
+
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Member", b =>
                 {
                     b.HasOne("ChatingApp.Models.AppUser", "User")
@@ -482,6 +523,11 @@ namespace ChatingApp.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ChatingApp.BackEnd.Entities.Group", b =>
+                {
+                    b.Navigation("Connections");
                 });
 
             modelBuilder.Entity("ChatingApp.BackEnd.Entities.Member", b =>
