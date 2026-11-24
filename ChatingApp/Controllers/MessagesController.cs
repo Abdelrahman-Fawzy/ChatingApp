@@ -8,13 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChatingApp.BackEnd.Controllers
 {
-    public class MessagesController(IMessageRepository messageRepository, IMemberRepository memberRepository) : BaseApiController
+    public class MessagesController(IUnitOfWork uow) : BaseApiController
     {
         [HttpPost()]
         public async Task<ActionResult<MessageDTO>> CreateMessage(CreateMessageDTO createMessageDTO)
         {
-            var sender = await memberRepository.GetMember(User.GetMemberId());
-            var recepient = await memberRepository.GetMember(createMessageDTO.RecipientId);
+            var sender = await uow.MemberRepository.GetMember(User.GetMemberId());
+            var recepient = await uow.MemberRepository.GetMember(createMessageDTO.RecipientId);
 
             if(recepient == null)
                 return BadRequest(new { Message = "هذا المستخدم غير موجود" });
@@ -30,9 +30,9 @@ namespace ChatingApp.BackEnd.Controllers
                 Content = createMessageDTO.Content
             };
 
-            messageRepository.AddMessage(message);
+            uow.MessageRepository.AddMessage(message);
 
-            if (await messageRepository.SaveAllAsync()) return MessageExtention.ToDTO(message);
+            if (await uow.CompleteAsync()) return MessageExtention.ToDTO(message);
 
             return BadRequest(new { Message = "فشل إرسال الرسالة" });
         }
@@ -41,20 +41,20 @@ namespace ChatingApp.BackEnd.Controllers
         public async Task<ActionResult<PaginatedResult<MessageDTO>>> GetMessagesByContainer([FromQuery] MessageParams messageParams)
         {
             messageParams.MemberId = User.GetMemberId();
-            return Ok(await messageRepository.GetMessagesForMember(messageParams));
+            return Ok(await uow.MessageRepository.GetMessagesForMember(messageParams));
         }
 
         [HttpGet("thread/{otherMemberId}")]
         public async Task<ActionResult<IReadOnlyList<MessageDTO>>> GetMessageThread(string otherMemberId)
         {
-            return Ok(await messageRepository.GetMessageThread(User.GetMemberId(), otherMemberId));
+            return Ok(await uow.MessageRepository.GetMessageThread(User.GetMemberId(), otherMemberId));
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteMessage(string id)
         {
             var memberId = User.GetMemberId();
-            var message = await messageRepository.GetMessage(id);
+            var message = await uow.MessageRepository.GetMessage(id);
 
             if(message == null) return NotFound(new { Message = "الرسالة غير موجودة" });
 
@@ -65,9 +65,9 @@ namespace ChatingApp.BackEnd.Controllers
             if (message.RecipientId == memberId) message.RecipientDeleted = true;
 
             if (message.SenderDeleted && message.RecipientDeleted)
-                messageRepository.DeleteMessage(message);
+                uow.MessageRepository.DeleteMessage(message);
 
-            if (await messageRepository.SaveAllAsync()) return Ok();
+            if (await uow.CompleteAsync()) return Ok();
 
             return BadRequest(new { Message = "فشل حذف الرسالة" });
         }

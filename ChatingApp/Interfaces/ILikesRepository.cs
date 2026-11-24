@@ -10,6 +10,5 @@ namespace ChatingApp.BackEnd.Interfaces
         Task<IReadOnlyList<string>> GetCurrentMemberLikesIDs(string memberID);
         void AddLike(MemberLike memberLike);
         void RemoveLike(MemberLike memberLike);
-        Task<bool> SaveAllAsync();
     }
 }

@@ -85,10 +85,5 @@ namespace ChatingApp.BackEnd.Data
         {
             await context.Connections.Where(c => c.ConnectionID == connectionID).ExecuteDeleteAsync();
         }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await context.SaveChangesAsync() > 0;
-        }
     }
 }

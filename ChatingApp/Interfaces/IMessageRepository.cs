@@ -11,7 +11,6 @@ namespace ChatingApp.BackEnd.Interfaces
         Task<Message?> GetMessage(string id);
         Task<PaginatedResult<MessageDTO>> GetMessagesForMember(MessageParams messageParams);
         Task<IReadOnlyList<MessageDTO>> GetMessageThread(string currentmemberId, string otherMemberId);
-        Task<bool> SaveAllAsync();
 
         void AddGroup(Group group);
         Task RemoveConnection(string connectionID);

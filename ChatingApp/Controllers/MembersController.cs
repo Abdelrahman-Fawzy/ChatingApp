@@ -16,7 +16,7 @@ using System.Security.Claims;
 namespace ChatingApp.Controllers
 {
     [Authorize]
-    public class MembersController(IMemberRepository memberRepository, IPhotoService _photoService) : BaseApiController
+    public class MembersController(IUnitOfWork uow, IPhotoService _photoService) : BaseApiController
     {
 
         [HttpGet]
@@ -25,13 +25,13 @@ namespace ChatingApp.Controllers
 
             memberParams.CurrentMemberID = User.GetMemberId();
 
-            return Ok(await memberRepository.GetMembersAsync(memberParams));
+            return Ok(await uow.MemberRepository.GetMembersAsync(memberParams));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Member>> GetMember(string id)
         {
-            var user = await memberRepository.GetMember(id);
+            var user = await uow.MemberRepository.GetMember(id);
             if (user == null) return NotFound(new {Message = "لا يوجد مستخدم"});
             return Ok(user);
         }
@@ -39,7 +39,7 @@ namespace ChatingApp.Controllers
         [HttpGet("{id}/photos")]
         public async Task<ActionResult<IReadOnlyList<Photo>>> GetPhotosByMemberId(string id)
         {
-            return Ok(await memberRepository.GetPhotosByMemberIdAsync(id));
+            return Ok(await uow.MemberRepository.GetPhotosByMemberIdAsync(id));
         }
 
         [HttpPut()]
@@ -47,7 +47,7 @@ namespace ChatingApp.Controllers
         {
             var memberId = User.GetMemberId();
 
-            var member = await memberRepository.GetMemberToUpdate(memberId);
+            var member = await uow.MemberRepository.GetMemberToUpdate(memberId);
 
             if(member == null) return BadRequest("Could not get member");
 
@@ -56,9 +56,9 @@ namespace ChatingApp.Controllers
             member.Country = memberUpdateDTO.Country ?? member.Country;
             member.City = memberUpdateDTO.City ?? member.City;
 
-            memberRepository.Update(member);
+            uow.MemberRepository.Update(member);
 
-            if (await memberRepository.SaveChangesAsync())
+            if (await uow.CompleteAsync())
                 return NoContent();
 
             return BadRequest("Failed to update member");
@@ -68,7 +68,7 @@ namespace ChatingApp.Controllers
         [HttpPost("add-photo")]
         public async Task<ActionResult<Photo>> AddPhoto(IFormFile file)
         {
-            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberToUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Cannot update member");
 
@@ -91,7 +91,7 @@ namespace ChatingApp.Controllers
 
             member.Photos.Add(photo);
 
-            if(await  memberRepository.SaveChangesAsync() ) return photo;
+            if(await  uow.CompleteAsync() ) return photo;
 
             return BadRequest("Problem adding photo");
         }
@@ -99,7 +99,7 @@ namespace ChatingApp.Controllers
         [HttpPut("set-main-photo/{photoID}")]
         public async Task<ActionResult> SetMainPhoto(int photoID)
         {
-            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberToUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Cannot get member from token");
 
@@ -111,7 +111,7 @@ namespace ChatingApp.Controllers
             member.ImageUrl = photo.Url;
             member.User.ImageUrl = photo.Url;
 
-            if (await memberRepository.SaveChangesAsync()) return NoContent();
+            if (await uow.CompleteAsync()) return NoContent();
 
             return BadRequest("Problem setting main photo");
         }
@@ -119,7 +119,7 @@ namespace ChatingApp.Controllers
         [HttpDelete("delete-photo/{photoID}")]
         public async Task<ActionResult> DeletePhoto(int photoID)
         {
-            var member = await memberRepository.GetMemberToUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberToUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Cannot get member from token");
 
@@ -136,7 +136,7 @@ namespace ChatingApp.Controllers
 
             member.Photos.Remove(photo);
 
-            if (await memberRepository.SaveChangesAsync()) return NoContent();
+            if (await uow.CompleteAsync()) return NoContent();
 
             return BadRequest("Problem deleting the photo");
         }

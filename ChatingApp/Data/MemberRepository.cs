@@ -54,19 +54,9 @@ namespace ChatingApp.BackEnd.Data
                 .ToListAsync();
         }
 
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
-
         public void Update(Member member)
         {
             _context.Entry(member).State = EntityState.Modified;
-        }
-
-        public Task<PaginatedResult<Member>> GetMembersAsync()
-        {
-            throw new NotImplementedException();
         }
     }
 }

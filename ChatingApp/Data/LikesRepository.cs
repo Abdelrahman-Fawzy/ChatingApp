@@ -57,11 +57,6 @@ namespace ChatingApp.BackEnd.Data
         public void RemoveLike(MemberLike memberLike)
         {
             context.Likes.Remove(memberLike);
-        }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await context.SaveChangesAsync() > 0;
-        }   
+        }  
     }
 }
