@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace ChatingApp.BackEnd.SignalR
 {
-    public class MessageHub(IMessageRepository messageRepository, IMemberRepository memberRepository, IHubContext<PresenceHub> presenceHubContext) : Hub
+    public class MessageHub(IUnitOfWork uow, IHubContext<PresenceHub> presenceHubContext) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -22,21 +22,21 @@ namespace ChatingApp.BackEnd.SignalR
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             await AddToGroup(groupName);
 
-            var messages = await messageRepository.GetMessageThread(GetUserID(), otherUserId);
+            var messages = await uow.MessageRepository.GetMessageThread(GetUserID(), otherUserId);
 
             await Clients.Group(groupName).SendAsync("ReceiveMessageThread", messages);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            await messageRepository.RemoveConnection(Context.ConnectionId);
+            await uow.MessageRepository.RemoveConnection(Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
 
         public async Task SendMessage(CreateMessageDTO createMessageDTO)
         {
-            var sender = await memberRepository.GetMember(GetUserID());
-            var recepient = await memberRepository.GetMember(createMessageDTO.RecipientId);
+            var sender = await uow.MemberRepository.GetMember(GetUserID());
+            var recepient = await uow.MemberRepository.GetMember(createMessageDTO.RecipientId);
 
             if (recepient == null)
                 throw new HubException("هذا المستخدم غير موجود");
@@ -53,7 +53,7 @@ namespace ChatingApp.BackEnd.SignalR
             };
 
             var groupName = GetGroupName(sender.Id, recepient.Id);
-            var group = await messageRepository.GetMessageGroup(groupName);
+            var group = await uow.MessageRepository.GetMessageGroup(groupName);
             var userInGroup = group != null && group.Connections.Any(c => c.UserID == message.RecipientId);
 
             if(userInGroup)
@@ -61,9 +61,9 @@ namespace ChatingApp.BackEnd.SignalR
                 message.DateRead = DateTime.UtcNow;
             }
 
-            messageRepository.AddMessage(message);
+            uow.MessageRepository.AddMessage(message);
 
-            if (await messageRepository.SaveAllAsync()) {
+            if (await uow.CompleteAsync()) {
                 await Clients.Group(groupName).SendAsync("NewMessage", message.ToDTO());
                 var connections = await PresenceTracker.GetConnectionsForUser(recepient.Id);
                 if(connections != null && connections.Count > 0 && !userInGroup)
@@ -77,17 +77,17 @@ namespace ChatingApp.BackEnd.SignalR
 
         private async Task<bool> AddToGroup(string groupName)
         {
-            var group = await messageRepository.GetMessageGroup(groupName);
+            var group = await uow.MessageRepository.GetMessageGroup(groupName);
             var connection = new Connection(Context.ConnectionId, GetUserID());
 
             if(group == null)
             {
                 group = new Group(groupName);
-                messageRepository.AddGroup(group);
+                uow.MessageRepository.AddGroup(group);
             }
 
             group.Connections.Add(connection);
-            return await messageRepository.SaveAllAsync();
+            return await uow.CompleteAsync();
         }
 
         public static string GetGroupName(string caller, string other)

@@ -154,6 +154,9 @@ namespace ChatingApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
                     b.Property<string>("MemberId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");

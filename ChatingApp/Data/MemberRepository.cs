@@ -46,12 +46,26 @@ namespace ChatingApp.BackEnd.Data
                 .SingleOrDefaultAsync(m => m.Id == id);
         }
 
-        public async Task<IReadOnlyList<Photo>> GetPhotosByMemberIdAsync(string id)
+        public async Task<Member?> GetMemberWithAllPhotosToUpdate(string id)
         {
             return await _context.Members
-                .Where(m => m.Id == id)
-                .SelectMany(m => m.Photos)
-                .ToListAsync();
+                .Include(m => m.User)
+                .Include(m => m.Photos)
+                .IgnoreQueryFilters()
+                .SingleOrDefaultAsync(m => m.Id == id);
+        }
+
+        public async Task<IReadOnlyList<Photo>> GetPhotosByMemberIdAsync(string memberId, bool isCurrentUser)
+        {
+            var query = _context.Members
+                .Where(m => m.Id == memberId)
+                .SelectMany(m => m.Photos);
+
+
+            if (isCurrentUser) query = query.IgnoreQueryFilters();
+
+            return await query.ToListAsync();
+
         }
 
         public void Update(Member member)

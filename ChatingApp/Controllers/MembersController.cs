@@ -39,7 +39,8 @@ namespace ChatingApp.Controllers
         [HttpGet("{id}/photos")]
         public async Task<ActionResult<IReadOnlyList<Photo>>> GetPhotosByMemberId(string id)
         {
-            return Ok(await uow.MemberRepository.GetPhotosByMemberIdAsync(id));
+            var isCurrentUser = User.GetMemberId() == id;
+            return Ok(await uow.MemberRepository.GetPhotosByMemberIdAsync(id, isCurrentUser));
         }
 
         [HttpPut()]
@@ -83,11 +84,11 @@ namespace ChatingApp.Controllers
                 MemberId = User.GetMemberId()
             };
 
-            if(member.ImageUrl == null)
-            {
-                member.ImageUrl = photo.Url;
-                member.User.ImageUrl = photo.Url;
-            }
+            //if(member.ImageUrl == null)
+            //{
+            //    member.ImageUrl = photo.Url;
+            //    member.User.ImageUrl = photo.Url;
+            //}
 
             member.Photos.Add(photo);
 
@@ -108,8 +109,11 @@ namespace ChatingApp.Controllers
             if (photo == null) return BadRequest("هذا الصورة غير موجودة");
             if (member.ImageUrl == photo.Url) return BadRequest("هذه الصورة هي الرئيسية بالفعل");
 
-            member.ImageUrl = photo.Url;
-            member.User.ImageUrl = photo.Url;
+            if(photo.IsApproved)
+            {
+                member.ImageUrl = photo.Url;
+                member.User.ImageUrl = photo.Url;
+            }
 
             if (await uow.CompleteAsync()) return NoContent();
 
@@ -119,7 +123,7 @@ namespace ChatingApp.Controllers
         [HttpDelete("delete-photo/{photoID}")]
         public async Task<ActionResult> DeletePhoto(int photoID)
         {
-            var member = await uow.MemberRepository.GetMemberToUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberWithAllPhotosToUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Cannot get member from token");
 

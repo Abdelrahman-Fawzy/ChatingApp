@@ -55,6 +55,7 @@ namespace ChatingApp.BackEnd.Data
                 {
                     Url = member.ImageUrl!,
                     MemberId = member.Id,
+                    IsApproved = true
                 });
 
                 var result = await userManager.CreateAsync(user, "P@ssw0rd");

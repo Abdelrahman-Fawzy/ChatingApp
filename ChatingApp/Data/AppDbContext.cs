@@ -20,6 +20,8 @@ namespace ChatingApp.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Photo>().HasQueryFilter(p => p.IsApproved);
+
             modelBuilder.Entity<IdentityRole>()
                 .HasData(
                     new IdentityRole { Id = "member-id", Name = "Member", NormalizedName = "MEMBER" },
